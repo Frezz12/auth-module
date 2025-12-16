@@ -35,4 +35,4 @@ COPY --from=frontend-builder /app/frontend/.output ./frontend/.output
 EXPOSE 8090 3001
 
 # Start both backend and frontend
-CMD sh -c "./pocketbase serve --http=0.0.0.0:8090 & cd frontend/.output && bun server/index.mjs --port=3001"
+CMD sh -c "./pocketbase serve --http=0.0.0.0:8090 & cd frontend/.output && bun server/index.mjs --port=3002"
