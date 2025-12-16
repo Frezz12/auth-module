@@ -8,7 +8,7 @@ FROM base AS frontend-builder
 COPY frontend/package.json frontend/bun.lock frontend/pnpm-workspace.yaml ./frontend/
 # Install frontend dependencies
 WORKDIR /app/frontend
-RUN bun install --frozen-lockfile
+RUN bun install
 # Copy frontend source code and build
 COPY frontend/ .
 RUN bun run postinstall && bun run build
