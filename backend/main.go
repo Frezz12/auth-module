@@ -4,8 +4,6 @@ import (
 	"log"
 	"os"
 
-	// _ "auth_module/migrations"
-
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
