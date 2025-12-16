@@ -1,19 +1,38 @@
-FROM oven/bun:1.1-alpine AS base
+FROM oven/bun:1.2-alpine AS base
+
+FROM base AS deps
 WORKDIR /app
 
-FROM base AS frontend-builder
-COPY frontend/package.json frontend/bun.lock frontend/pnpm-workspace.yaml ./frontend/
-WORKDIR /app/frontend
-RUN bun install
-COPY frontend/ .
-RUN bun run postinstall && bun run build
+COPY package.json bun.lock* pnpm-workspace.yaml ./
 
-FROM oven/bun:1.1-alpine AS production
-RUN apk --no-cache add ca-certificates
+RUN bun install --frozen-lockfile
+
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ENV NODE_ENV=production
+ENV NITRO_HOST=0.0.0.0
+
+RUN bun run build
+
+FROM base AS runner
 WORKDIR /app
 
-COPY --from=frontend-builder /app/frontend/.output ./frontend/.output
+ENV NODE_ENV=production
+ENV NITRO_HOST=0.0.0.0
+ENV PORT=3002
 
-EXPOSE 8090 3001
+RUN addgroup --system --gid 1001 bunjs
+RUN adduser --system --uid 1001 bunjs
 
-CMD sh -c "cd frontend/.output && bun server/index.mjs --port=3002"
+COPY --from=builder /app/.output ./.output
+
+RUN chown -R bunjs:bunjs /app
+
+USER bunjs
+
+EXPOSE 3002
+
+CMD ["bun", ".output/server/index.mjs"]
