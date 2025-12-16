@@ -18,7 +18,7 @@ func main() {
 
 		// Добавьте здесь другие маршруты если нужно
 
-		return nil
+		return se.Next()
 	})
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
