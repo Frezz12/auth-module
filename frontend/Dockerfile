@@ -1,52 +1,19 @@
-# Use the official Bun image
-FROM oven/bun:1.2-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
+FROM oven/bun:1.1-alpine AS base
 WORKDIR /app
 
-# Copy package files
-COPY package.json bun.lock* ./
+FROM base AS frontend-builder
+COPY frontend/package.json frontend/bun.lock frontend/pnpm-workspace.yaml ./frontend/
+WORKDIR /app/frontend
+RUN bun install
+COPY frontend/ .
+RUN bun run postinstall && bun run build
 
-# Install dependencies
-RUN bun install --frozen-lockfile
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# Set environment variables for build
-ENV NODE_ENV=production
-ENV NITRO_HOST=0.0.0.0
-
-# Build the application
-RUN bun run build
-
-# Production image, copy all the files and run bun
-FROM base AS runner
+FROM oven/bun:1.1-alpine AS production
+RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV NITRO_HOST=0.0.0.0
-ENV PORT=3000
+COPY --from=frontend-builder /app/frontend/.output ./frontend/.output
 
-# Create a non-root user
-RUN addgroup --system --gid 1001 bunjs
-RUN adduser --system --uid 1001 bunjs
+EXPOSE 8090 3001
 
-# Copy built output
-COPY --from=builder /app/.output ./.output
-
-# Set ownership of the app directory
-RUN chown -R bunjs:bunjs /app
-
-# Switch to non-root user
-USER bunjs
-
-# Expose port
-EXPOSE 3000
-
-# Start the application
-CMD ["bun", ".output/server/index.mjs"]
+CMD sh -c "cd frontend/.output && bun server/index.mjs --port=3002"
