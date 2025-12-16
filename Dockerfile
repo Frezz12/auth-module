@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for auth-module using bun
-FROM oven/bun:latest-alpine AS base
+FROM oven/bun:1.1-alpine AS base
 WORKDIR /app
 
 # Frontend build stage
@@ -20,7 +20,7 @@ COPY backend/ .
 RUN CGO_ENABLED=0 GOOS=linux go build -o pocketbase .
 
 # Production stage
-FROM oven/bun:latest-alpine AS production
+FROM oven/bun:1.1-alpine AS production
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
